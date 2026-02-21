@@ -1,0 +1,33 @@
+name: Check APIs Ping & Status
+
+on:
+  schedule:
+    # Runs automatically twice a day (00:00 UTC and 12:00 UTC)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch: # Allows you to run it manually from the Actions tab
+
+permissions:
+  contents: write # Allows the bot to save data.json back to the repo
+
+jobs:
+  update-api-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run API Check Script
+        run: node check_apis.js
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          # Only commit if data actually changed
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update API status and ping" && git push)
