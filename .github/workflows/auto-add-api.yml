@@ -1,0 +1,75 @@
+name: Auto-Add API to Database
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  auto-add:
+    # This ensures the bot only triggers when the issue title starts with "Add New API:"
+    if: startsWith(github.event.issue.title, 'Add New API:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Read Issue and Update JSON
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Get the text from the issue
+            const issueBody = context.payload.issue.body;
+            
+            // Find the JSON block inside the issue
+            const match = issueBody.match(/```json\s*([\s\S]*?)\s*```/);
+            
+            if (!match) {
+              console.log("No JSON found.");
+              return;
+            }
+            
+            try {
+              const newApi = JSON.parse(match[1]);
+              const dbPath = 'api_list.json';
+              
+              // Open the current database
+              let apiList = [];
+              if (fs.existsSync(dbPath)) {
+                apiList = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+              }
+              
+              // Prevent duplicates (checks if URL already exists)
+              const alreadyExists = apiList.find(api => api.url === newApi.url);
+              
+              if (!alreadyExists) {
+                // Add the new API and save the file
+                apiList.push(newApi);
+                fs.writeFileSync(dbPath, JSON.stringify(apiList, null, 2));
+                console.log("API successfully added to database!");
+              } else {
+                console.log("API already exists in the database.");
+              }
+              
+            } catch (error) {
+              console.error("Failed to parse JSON:", error);
+            }
+
+      - name: Commit and Push Changes to GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add api_list.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-added new API from Issue #${{ github.event.issue.number }}" && git push)
+
+      - name: Comment and Close Issue
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "✅ **Success!** This API has been automatically verified by the Bot and added to the database. It will appear on the website shortly!"
+          gh issue close ${{ github.event.issue.number }} --reason "completed"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
