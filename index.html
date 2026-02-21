@@ -14,6 +14,9 @@
         /* Dark mode adjustments */
         [data-bs-theme="dark"] body { background-color: #121212; }
         [data-bs-theme="dark"] .table-container { background: #1e1e1e; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        [data-bs-theme="dark"] .modal-content { background-color: #1e1e1e; color: #fff; border: 1px solid #333; }
+        [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: #2b2b2b; color: #fff; border-color: #444; }
+        [data-bs-theme="dark"] .form-control:focus, [data-bs-theme="dark"] .form-select:focus { background-color: #333; color: #fff; }
         
         .status-Active { color: #198754; font-weight: bold; }
         .status-Offline { color: #dc3545; font-weight: bold; }
@@ -28,16 +31,19 @@
     <div class="container mt-5">
         
         <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <div>
                 <h1 class="fw-bold mb-0"><i class="bi bi-robot text-primary"></i> REST API Collection</h1>
                 <small id="lastUpdated" class="text-muted">Loading last update time...</small>
             </div>
-            <div>
-                <button id="themeToggle" class="btn btn-outline-secondary rounded-circle p-2 lh-1">
+            <div class="d-flex gap-2">
+                <button id="themeToggle" class="btn btn-outline-secondary rounded-circle p-2 lh-1" title="Toggle Dark Mode">
                     <i class="bi bi-moon-fill" id="themeIcon"></i>
                 </button>
-                <a href="https://github.com/inirey/API-COLLECTION" class="btn btn-dark ms-2" target="_blank">
+                <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#addApiModal">
+                    <i class="bi bi-plus-circle-fill"></i> Add API
+                </button>
+                <a href="https://github.com/inirey/API-COLLECTION" class="btn btn-dark shadow-sm" target="_blank">
                     <i class="bi bi-github"></i> GitHub
                 </a>
             </div>
@@ -45,7 +51,7 @@
 
         <!-- Search Bar -->
         <div class="row mb-4">
-            <div class="col-md-6 offset-md-3">
+            <div class="col-md-8 offset-md-2">
                 <div class="input-group shadow-sm">
                     <span class="input-group-text bg-primary text-white border-primary"><i class="bi bi-search"></i></span>
                     <input type="text" id="searchInput" class="form-control border-primary" placeholder="Search API name, developer, or description...">
@@ -78,6 +84,49 @@
         </div>
     </div>
 
+    <!-- Add API Modal -->
+    <div class="modal fade" id="addApiModal" tabindex="-1" aria-labelledby="addApiModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="addApiModalLabel"><i class="bi bi-cloud-plus-fill text-success"></i> Submit New API</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">Fill out this form to submit your API. It will generate a GitHub issue for the admin to review and add to the database securely.</p>
+                    <form id="addApiForm" onsubmit="submitApi(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">API Name</label>
+                            <input type="text" class="form-control" id="apiName" placeholder="e.g., My Awesome API" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Developer Name</label>
+                            <input type="text" class="form-control" id="apiDev" placeholder="e.g., JohnDoe" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Base URL</label>
+                            <input type="url" class="form-control" id="apiUrl" placeholder="https://api.example.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Description</label>
+                            <input type="text" class="form-control" id="apiDesc" placeholder="Short description of what it does" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Requires API Key?</label>
+                            <select class="form-select" id="apiAuth">
+                                <option value="false">No (Free / No Auth)</option>
+                                <option value="true">Yes (Requires API Key)</option>
+                            </select>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-send-fill"></i> Submit for Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification for Copy -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -88,7 +137,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS (Needed for Toasts) -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -99,7 +148,6 @@
         const themeIcon = document.getElementById('themeIcon');
         const htmlElement = document.documentElement;
 
-        // Check local storage for saved theme
         const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
 
@@ -124,7 +172,6 @@
         // Fetch Data
         fetch('data.json', { cache: "no-store" })
             .then(response => {
-                // Get last modified date from header
                 const lastModified = response.headers.get('Last-Modified');
                 if (lastModified) {
                     const date = new Date(lastModified);
@@ -158,7 +205,6 @@
             data.forEach(api => {
                 const statusClass = 'status-' + (api.status || 'Offline');
                 
-                // Ping color logic
                 let pingDisplay = '-';
                 if (api.ping) {
                     const pingVal = parseInt(api.ping);
@@ -209,6 +255,53 @@
                 const toast = new bootstrap.Toast(toastEl);
                 toast.show();
             });
+        }
+
+        // Submit API Logic (Generates GitHub Issue)
+        function submitApi(event) {
+            event.preventDefault();
+            
+            // Get form values
+            const name = document.getElementById('apiName').value;
+            const dev = document.getElementById('apiDev').value;
+            const url = document.getElementById('apiUrl').value;
+            const desc = document.getElementById('apiDesc').value;
+            const auth = document.getElementById('apiAuth').value;
+
+            // Create GitHub Issue URL with pre-filled Markdown
+            const repoUrl = "https://github.com/inirey/API-COLLECTION";
+            const issueTitle = encodeURIComponent(`Add New API: ${name}`);
+            
+            const issueBody = encodeURIComponent(`### New API Submission
+
+**API Name:** ${name}
+**Developer:** ${dev}
+**URL:** ${url}
+**Description:** ${desc}
+**Requires Auth:** ${auth === 'true' ? 'Yes' : 'No'}
+
+---
+**Admin: Copy the JSON below into \`api_list.json\`**
+\`\`\`json
+{
+  "name": "${name}",
+  "developer": "${dev}",
+  "url": "${url}",
+  "description": "${desc}",
+  "auth": ${auth}
+}
+\`\`\``);
+
+            const finalUrl = `${repoUrl}/issues/new?title=${issueTitle}&body=${issueBody}`;
+            
+            // Open GitHub to submit the issue
+            window.open(finalUrl, '_blank');
+
+            // Close the modal and reset form
+            const modalEl = document.getElementById('addApiModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            document.getElementById('addApiForm').reset();
         }
     </script>
 </body>
