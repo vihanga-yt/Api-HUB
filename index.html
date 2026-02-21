@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot REST API Collection</title>
+    <!-- Modern Bootstrap UI -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .table-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 50px; }
+        .status-Active { color: #198754; font-weight: bold; }
+        .status-Offline { color: #dc3545; font-weight: bold; }
+        .badge { font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="text-center mb-5">
+            <h1 class="fw-bold">WhatsApp Bot REST APIs</h1>
+            <p class="text-muted">Collection of REST APIs for WhatsApp bot needs.<br>Status and Ping are automatically checked and updated twice daily.</p>
+            <a href="https://github.com/inirey/API-COLLECTION" class="btn btn-dark" target="_blank">View on GitHub</a>
+        </div>
+
+        <div class="table-container table-responsive">
+            <table class="table table-hover table-bordered align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>API Name</th>
+                        <th>Developer</th>
+                        <th>URL</th>
+                        <th>Status</th>
+                        <th>Ping</th>
+                        <th>Description</th>
+                        <th>Auth Needed</th>
+                    </tr>
+                </thead>
+                <tbody id="apiTable">
+                    <tr><td colspan="7" class="text-muted py-4">Loading API data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Fetch the generated data.json file
+        fetch('data.json')
+            .then(response => {
+                if (!response.ok) throw new Error("data.json not found");
+                return response.json();
+            })
+            // Fallback to static list if the Action hasn't run yet
+            .catch(() => fetch('api_list.json').then(res => res.json())) 
+            .then(data => {
+                const tbody = document.getElementById('apiTable');
+                tbody.innerHTML = '';
+                
+                data.forEach(api => {
+                    const statusClass = 'status-' + (api.status || 'Offline');
+                    
+                    // Ping color logic
+                    let pingDisplay = '-';
+                    if (api.ping) {
+                        const pingVal = parseInt(api.ping);
+                        let badgeColor = 'bg-secondary';
+                        
+                        if (api.ping === 'Timeout' || api.ping === 'Error') { badgeColor = 'bg-danger'; }
+                        else if (pingVal < 500) { badgeColor = 'bg-success'; } // Fast response
+                        else if (pingVal < 1500) { badgeColor = 'bg-warning text-dark'; } // Medium response
+                        else { badgeColor = 'bg-danger'; } // Slow response
+                        
+                        pingDisplay = `<span class="badge ${badgeColor}">${api.ping}</span>`;
+                    }
+
+                    // Populate rows dynamically
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold">${api.name}</td>
+                            <td>${api.developer}</td>
+                            <td><a href="${api.url}" target="_blank" class="btn btn-sm btn-primary">Visit Link</a></td>
+                            <td class="${statusClass}">${api.status || 'Checking...'}</td>
+                            <td>${pingDisplay}</td>
+                            <td>${api.description}</td>
+                            <td>${api.auth ? '<span class="badge bg-danger">APIKEY</span>' : '<span class="badge bg-success">NO</span>'}</td>
+                        </tr>
+                    `;
+                });
+            })
+            .catch(error => {
+                document.getElementById('apiTable').innerHTML = '<tr><td colspan="7" class="text-danger py-4">Failed to load API data. Make sure GitHub Actions has run.</td></tr>';
+            });
+    </script>
+</body>
+</html>
