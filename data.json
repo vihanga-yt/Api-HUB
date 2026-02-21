@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Fgsi RestAPIs",
+    "developer": "FongsiDev",
+    "url": "https://api.fongsi.eu.org",
+    "description": "Fgsi RestAPIs",
+    "auth": false,
+    "status": "Offline",
+    "ping": "Error"
+  },
+  {
+    "name": "TOXIC DEVIL API",
+    "developer": "TOXIC-DEVIL",
+    "url": "https://toxicdevilapi.herokuapp.com",
+    "description": "TOXIC DEVIL API - Free Rest API",
+    "auth": false,
+    "status": "Active",
+    "ping": "61 ms"
+  },
+  {
+    "name": "XZN API",
+    "developer": "XZN",
+    "url": "https://xzn.rest",
+    "description": "API collection.",
+    "auth": true,
+    "status": "Offline",
+    "ping": "Error"
+  }
+]
