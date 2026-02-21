@@ -19,5 +19,12 @@
     "url": "https://xzn.rest",
     "description": "API collection.",
     "auth": true
+  },
+  {
+    "name": "d",
+    "developer": "f",
+    "url": "https://github.com/",
+    "description": "f",
+    "auth": false
   }
 ]
