@@ -15,7 +15,7 @@
     "description": "TOXIC DEVIL API - Free Rest API",
     "auth": false,
     "status": "Active",
-    "ping": "245 ms"
+    "ping": "145 ms"
   },
   {
     "name": "XZN API",
@@ -33,6 +33,6 @@
     "description": "f",
     "auth": false,
     "status": "Active",
-    "ping": "89 ms"
+    "ping": "62 ms"
   }
 ]
