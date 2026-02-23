@@ -26,5 +26,12 @@
     "url": "https://github.com/",
     "description": "f",
     "auth": false
+  },
+  {
+    "name": "l",
+    "developer": "l",
+    "url": "https://githgub.com/",
+    "description": "d",
+    "auth": true
   }
 ]
